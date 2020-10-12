@@ -1,13 +1,5 @@
 import app from 'apprun';
+import Home from './components/home';
+import './firebase';
 
-const state = 'Hello world - AppRun!';
-
-const view = (state) => <div>
-  <h1>{state}</h1>
-</div>;
-
-const update = {
-
-};
-
-app.start(document.body, state, view, update);
+app.render(document.body, <Home />);
