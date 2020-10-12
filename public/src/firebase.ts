@@ -1,25 +1,12 @@
+import app from 'apprun';
+
 declare var firebase;
-
-document.addEventListener('DOMContentLoaded', function() {
-
-  // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-  // // The Firebase SDK is initialized and available here!
-  //
-  // firebase.auth().onAuthStateChanged(user => { });
-  // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-  // firebase.messaging().requestPermission().then(() => { });
-  // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-  // firebase.analytics(); // call to activate
-  // firebase.analytics().logEvent('tutorial_completed');
-  // firebase.performance(); // call to activate
-  //
-  // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-
+export default async () => {
   try {
     let app = firebase.app();
     let features = [
       'auth',
-      'database',
+      'firestore',
       'messaging',
       'storage',
       'analytics',
@@ -27,7 +14,47 @@ document.addEventListener('DOMContentLoaded', function() {
       'performance',
     ].filter(feature => typeof app[feature] === 'function');
     console.log(`Firebase SDK loaded with ${features.join(', ')}`);
+
+    // firebase.auth().onAuthStateChanged(user_init);
+    // firebase.auth().signInWithCustomToken(window['firebase_token']);
+
+    const db = firebase.firestore();
+    if (location.hostname === "localhost") {
+      db.settings({
+        host: "localhost:8080",
+        ssl: false
+      });
+    }
+    user_init('test', db);
+
   } catch (e) {
     console.error(e);
+    app.run('#error', e);
   }
-});
+}
+
+async function user_init(uid, db) {
+  //await db.enablePersistence();
+  //app.run('@user_signin', uid);
+  db.collection(`users`).doc(uid).set({
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  db.collection(`events`).where("uid", "==", uid).onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(function (change) {
+      if (change.type === "added") {
+        if (change.doc.metadata.hasPendingWrites) app.run('@saving')
+        // } else if (change.type === "removed") {
+        //   app.run('@done')
+      }
+    });
+  });
+  app.on('//:', (event, data = {}) => {
+    db.collection(`events`).add({ uid, event, data })
+  })
+
+  db.collection(`users/${uid}/todos`).orderBy('timestamp')
+    .onSnapshot(snapshot => app.run('@show-todos', snapshot.docs.map(d => ({ id: d.id, ...d.data() })))
+  );
+
+}
