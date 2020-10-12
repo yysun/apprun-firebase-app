@@ -16,12 +16,14 @@ exports.updateTodo = functions.firestore.document('events/{Id}')
     const db = admin.firestore();
     const del = () =>  !KEEP_EVENT && db.doc(`events/${context.params.Id}`).delete();
 
-    const todos = db.collection('/users/' + uid + '/todos');
+    const todos = db.collection('/todos');
     switch (event) {
       case '@create-todo':
+        data.uid = uid;
         data.timestamp = admin.firestore.FieldValue.serverTimestamp();
         return todos.add(data).then(()=>del());
       case '@update-todo':
+        data.uid = uid;
         return todos.doc(data.id).update(data).then(()=>del());
       case '@delete-todo':
         return todos.doc(data.id).delete().then(()=>del());

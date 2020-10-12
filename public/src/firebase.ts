@@ -19,9 +19,9 @@ export default async () => {
     // firebase.auth().signInWithCustomToken(window['firebase_token']);
 
     const db = firebase.firestore();
-    if (location.hostname === "localhost") {
+    if (location.hostname === 'localhost') {
       db.settings({
-        host: "localhost:8080",
+        host: 'localhost:8080',
         ssl: false
       });
     }
@@ -40,11 +40,11 @@ async function user_init(uid, db) {
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  db.collection(`events`).where("uid", "==", uid).onSnapshot(snapshot => {
+  db.collection(`events`).where('uid', '==', uid).onSnapshot(snapshot => {
     snapshot.docChanges().forEach(function (change) {
-      if (change.type === "added") {
+      if (change.type === 'added') {
         if (change.doc.metadata.hasPendingWrites) app.run('@saving')
-        // } else if (change.type === "removed") {
+        // } else if (change.type === 'removed') {
         //   app.run('@done')
       }
     });
@@ -53,7 +53,9 @@ async function user_init(uid, db) {
     db.collection(`events`).add({ uid, event, data })
   })
 
-  db.collection(`users/${uid}/todos`).orderBy('timestamp')
+  db.collection('todos')
+    .where('uid', '==', uid)
+    .orderBy('timestamp')
     .onSnapshot(snapshot => app.run('@show-todos', snapshot.docs.map(d => ({ id: d.id, ...d.data() })))
   );
 
